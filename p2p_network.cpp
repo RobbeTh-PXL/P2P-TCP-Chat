@@ -12,6 +12,8 @@ the connection of the peers from the peer list as the created socket is also in 
 4. No real error detection/handeling
 
 5. m_sockets only keeps growing, no deletions
+
+6. All sockets are looped through rather than the using socket that emitted the signal
 */
 
 p2p_network::p2p_network(QObject *parent) : QObject(parent) {}
@@ -21,7 +23,7 @@ bool p2p_network::connection_listener()
 	qDebug() << "Starting internal server...";
 	server = new QTcpServer(this);
 	// If server has a new connection, handle it (asynch)
-	connect(server, SIGNAL(new_connection()), this, SLOT(handle_new_connection()));
+	connect(server, SIGNAL(newConnection()), this, SLOT(handle_new_connection()));
 	// Listen for new connection to setup p2p socket
 	server->listen(QHostAddress::Any, 24042);
 	// TODO Custom Port and add error check
@@ -30,31 +32,35 @@ bool p2p_network::connection_listener()
 
 void p2p_network::handle_new_connection()
 {
-	qDebug() << "New peer joined, sending current peer list...";
-	// Create a socket for the new connection or wait until new connection
-	QTcpSocket *socket = new QTcpSocket(server->nextPendingConnection());
-	if (socket->waitForConnected())
+	while (server->hasPendingConnections())
 	{
-		// Add all current peers to peerlist
-		QString peers = update_peer_list();
-		// Send peerlist to new connection
-		socket->write(peers.toUtf8());
-		// Add socket to socket list
-		m_sockets.append(socket);
+		qDebug() << "New peer joined, sending current peer list...";
+		// Create a socket for the new connection or wait until new connection
+		QTcpSocket *socket = server->nextPendingConnection();
+		if (socket->waitForConnected())
+		{
+			// Add all current peers to peerlist
+			QString peers = update_peer_list();
+			// Send peerlist to new connection
+			socket->write(peers.toUtf8());
+			// Add socket to socket list
+			m_sockets.append(socket);
 
-		// Receive data when sended
-		connect(socket, SIGNAL(readyRead()), this, SLOT(broadcast_Rx()));
+			// Receive data when sended
+			connect(socket, SIGNAL(readyRead()), this, SLOT(broadcast_Rx()));
+			// Remove connection on remote disconnect
+			connect(socket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(handle_socket_state_changed()));
+		}
+
+		else
+		{
+
+			qDebug() << "Could not connect to new peer";
+			qDebug() << "Socket error:" << socket->errorString();
+			//socket->close();
+			//delete socket;
+		}
 	}
-
-	else
-	{
-		qDebug() << "Could not connect to new peer";
-		socket->close();
-		delete socket;
-	}
-
-	// Get ready for new connection
-	emit new_connection();
 }
 
 QString p2p_network::update_peer_list()
@@ -76,16 +82,18 @@ QString p2p_network::update_peer_list()
 
 void p2p_network::broadcast_Rx()
 {
-	// Read from all the sockets
-	for (QTcpSocket *socket : m_sockets)
+	// Find the socket that emitted the signal
+	QTcpSocket *socket = qobject_cast<QTcpSocket*>(sender());
+	if (!socket)
+		return; // If sender is not a QTcpSocket, return
+
+	while (socket->bytesAvailable() > 0)
 	{
-		while (socket->bytesAvailable() > 0)
-		{
-			QString message = QHostAddress(socket->peerAddress().toIPv4Address()).toString() + +": " + QString::fromUtf8(socket->readAll());
-			qDebug() << "Broadcast RX: " << message;
-			//emit newMessageReceived(message);
-		}
+		QString message = QHostAddress(socket->peerAddress().toIPv4Address()).toString() + +": " + QString::fromUtf8(socket->readAll());
+		qDebug() << "Broadcast RX: " << message;
+		//emit newMessageReceived(message);
 	}
+
 }
 
 void p2p_network::broadcast_Tx(QString msg)
@@ -93,7 +101,18 @@ void p2p_network::broadcast_Tx(QString msg)
 	// Write to all the sockets
 	for (QTcpSocket *socket : m_sockets)
 	{
-		socket->write(msg.toUtf8());
+		int state = socket->write(msg.toUtf8());
+
+		// Check if message is send
+		if (state == -1)
+		{
+			// Not send, remove from list
+			qWarning() << "Peer " << socket << " did not receive the message, and is removed";
+			qDebug() << "Socket error:" << socket->errorString();
+			socket->close();
+			m_sockets.removeOne(socket);
+			delete socket;
+		}
 	}
 }
 
@@ -108,6 +127,8 @@ bool p2p_network::join_network()
 	{
 		// Receive data when sended
 		connect(socket, SIGNAL(readyRead()), this, SLOT(broadcast_Rx()));
+		// Remove connection on remote disconnect
+		connect(socket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(handle_socket_state_changed()));
 
 		// Add socket to socket list
 		m_sockets.append(socket);
@@ -159,6 +180,8 @@ bool p2p_network::join_network()
 				{
 					// Receive data when sended
 					connect(socket, SIGNAL(readyRead()), this, SLOT(broadcast_Rx()));
+					// Remove connection on remote disconnect
+					connect(socket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(handle_socket_state_changed()));
 
 					// Add socket to socket list
 					m_sockets.append(peer_socket);
@@ -167,6 +190,7 @@ bool p2p_network::join_network()
 				else
 				{
 					qWarning() << "Could not connect to peer: " << line;
+					qDebug() << "Socket error:" << socket->errorString();
 					peer_socket->close();
 					delete peer_socket;
 				}
@@ -182,11 +206,49 @@ bool p2p_network::join_network()
 	else
 	{
 		qWarning() << "Could not connect to server: " << server_ip << ":" << server_port;
+		qDebug() << "Socket error:" << socket->errorString();
+
+		socket->close();
+		delete socket;
 		return false;
 	}
 
-	// Accept new connections to the network (peer list complete, all connections made)
-	emit new_connection();
-
 	return true;
+}
+
+void p2p_network::handle_socket_state_changed()
+{
+	// Find the socket that emitted the signal
+	QTcpSocket *socket = qobject_cast<QTcpSocket*>(sender());
+	if (!socket)
+		return; // If sender is not a QTcpSocket, return
+
+	if (socket->state() == QAbstractSocket::UnconnectedState)
+	{
+		qDebug() << "Peer " << socket << " lost connection";
+		socket->close();
+		m_sockets.removeOne(socket);
+		delete socket;
+	}
+}
+
+
+QString p2p_network::getServer_ip() const
+{
+	return server_ip;
+}
+
+void p2p_network::setServer_ip(const QString &newServer_ip)
+{
+	server_ip = newServer_ip;
+}
+
+int p2p_network::getServer_port() const
+{
+	return server_port;
+}
+
+void p2p_network::setServer_port(int newServer_port)
+{
+	server_port = newServer_port;
 }

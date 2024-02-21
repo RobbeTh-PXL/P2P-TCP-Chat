@@ -18,18 +18,22 @@ public:
 	bool connection_listener();
 	bool join_network();
 
+	QString getServer_ip() const;
+	void setServer_ip(const QString &newServer_ip);
+	int getServer_port() const;
+	void setServer_port(int newServer_port);
+
 signals:
-	//Signal of QTcpServer needs te be triggered outside of class
-	void new_connection();
 
 public slots:
 	void handle_new_connection();
 	void broadcast_Rx();
+	void handle_socket_state_changed();
 
 private:
 	// TODO getter setter
 	QString server_ip = "127.0.0.1";
-	int server_port = 43101;
+	int server_port = 24042;
 	QTcpServer *server;
 	QList<QTcpSocket *> m_sockets;
 
