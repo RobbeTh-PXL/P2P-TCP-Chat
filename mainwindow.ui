@@ -14,7 +14,7 @@
    <string>P2P TCP Chat</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QTextBrowser" name="textBrowser">
+   <widget class="QTextBrowser" name="chat_box">
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -24,7 +24,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QTextBrowser" name="textBrowser_2">
+   <widget class="QTextBrowser" name="debug_box">
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -34,7 +34,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QPlainTextEdit" name="plainTextEdit">
+   <widget class="QPlainTextEdit" name="msg_box">
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -44,7 +44,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_2">
+   <widget class="QPushButton" name="send_msg">
     <property name="geometry">
      <rect>
       <x>390</x>
@@ -117,7 +117,7 @@
       </spacer>
      </item>
      <item>
-      <widget class="QLineEdit" name="lineEdit_2"/>
+      <widget class="QLineEdit" name="peer_ip_box"/>
      </item>
     </layout>
    </widget>
@@ -152,7 +152,7 @@
       </spacer>
      </item>
      <item>
-      <widget class="QLineEdit" name="lineEdit_3"/>
+      <widget class="QLineEdit" name="peer_port_box"/>
      </item>
     </layout>
    </widget>
@@ -169,7 +169,7 @@
      <enum>Qt::Horizontal</enum>
     </property>
    </widget>
-   <widget class="QTextBrowser" name="textBrowser_3">
+   <widget class="QTextBrowser" name="peerlist_box">
     <property name="geometry">
      <rect>
       <x>530</x>
@@ -210,11 +210,11 @@
       </spacer>
      </item>
      <item>
-      <widget class="QLineEdit" name="lineEdit_4"/>
+      <widget class="QLineEdit" name="nickname_box"/>
      </item>
     </layout>
    </widget>
-   <widget class="QDialogButtonBox" name="buttonBox">
+   <widget class="QDialogButtonBox" name="connect_buttons">
     <property name="geometry">
      <rect>
       <x>580</x>
@@ -227,7 +227,7 @@
      <set>QDialogButtonBox::Close|QDialogButtonBox::Open</set>
     </property>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>550</x>
@@ -258,7 +258,7 @@
       </spacer>
      </item>
      <item>
-      <widget class="QLineEdit" name="lineEdit"/>
+      <widget class="QLineEdit" name="server_port_box"/>
      </item>
     </layout>
    </widget>
