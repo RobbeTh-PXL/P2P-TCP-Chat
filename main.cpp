@@ -3,14 +3,18 @@
 #include <QApplication>
 
 //TCP
-#include "tcp_network.h"
+#include "p2p_network.h"
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
 	//TCP
-	tcp_network peernetwork;
+	p2p_network network;
+
+	network.connection_listener();
+
+	//network.join_network();
 
     MainWindow w;
     w.show();
