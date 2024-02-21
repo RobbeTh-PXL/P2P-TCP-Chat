@@ -12,11 +12,11 @@ CONFIG += c++17
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
-    tcp_network.cpp
+    p2p_network.cpp
 
 HEADERS += \
     mainwindow.h \
-    tcp_network.h
+    p2p_network.h
 
 FORMS += \
     mainwindow.ui
