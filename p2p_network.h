@@ -32,8 +32,8 @@ public slots:
 
 private:
 	// TODO getter setter
-	QString server_ip = "127.0.0.1";
-	int server_port = 24042;
+	QString server_ip;
+	int server_port;
 	QTcpServer *server;
 	QList<QTcpSocket *> m_sockets;
 

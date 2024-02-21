@@ -119,24 +119,27 @@ void p2p_network::broadcast_Tx(QString msg)
 bool p2p_network::join_network()
 {
 	//Connect to a p2p (tcp) server
+	qDebug() << "Target server: " << server_ip << ":" << server_port;
 	qDebug() << "Joining network...";
 	QTcpSocket *socket = new QTcpSocket(this);
 	socket->connectToHost(server_ip, server_port);
 
 	if (socket->waitForConnected())
 	{
-		// Receive data when sended
+		qDebug() << "Connected to: " << server_ip;
+
+		// Read received peerlist
+		QString data, peer_ip, peer_port;
+		socket->waitForReadyRead();
+		data = socket->readAll();
+
+		// Receive new data when sended
 		connect(socket, SIGNAL(readyRead()), this, SLOT(broadcast_Rx()));
 		// Remove connection on remote disconnect
 		connect(socket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(handle_socket_state_changed()));
 
 		// Add socket to socket list
 		m_sockets.append(socket);
-		qDebug() << "Connected to: " << socket;
-
-		// Read received peerlist
-		QString data, peer_ip, peer_port;
-		data = socket->readAll();
 
 		// Check if there is data
 		if (data.isEmpty())
@@ -179,9 +182,9 @@ bool p2p_network::join_network()
 				if (peer_socket->waitForConnected())
 				{
 					// Receive data when sended
-					connect(socket, SIGNAL(readyRead()), this, SLOT(broadcast_Rx()));
+					connect(peer_socket, SIGNAL(readyRead()), this, SLOT(broadcast_Rx()));
 					// Remove connection on remote disconnect
-					connect(socket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(handle_socket_state_changed()));
+					connect(peer_socket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(handle_socket_state_changed()));
 
 					// Add socket to socket list
 					m_sockets.append(peer_socket);
@@ -190,7 +193,7 @@ bool p2p_network::join_network()
 				else
 				{
 					qWarning() << "Could not connect to peer: " << line;
-					qDebug() << "Socket error:" << socket->errorString();
+					qDebug() << "Socket error:" << peer_socket->errorString();
 					peer_socket->close();
 					delete peer_socket;
 				}
@@ -213,6 +216,7 @@ bool p2p_network::join_network()
 		return false;
 	}
 
+	qDebug() << "All peers added";
 	return true;
 }
 
@@ -225,7 +229,7 @@ void p2p_network::handle_socket_state_changed()
 
 	if (socket->state() == QAbstractSocket::UnconnectedState)
 	{
-		qDebug() << "Peer " << socket << " lost connection";
+		qDebug() << "Peer " << socket->peerAddress().toIPv4Address() << " lost connection";
 		socket->close();
 		m_sockets.removeOne(socket);
 		delete socket;
