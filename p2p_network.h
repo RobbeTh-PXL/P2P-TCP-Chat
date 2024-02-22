@@ -15,8 +15,10 @@ class p2p_network : public QObject
 
 public:
 	explicit p2p_network(QObject *parent = nullptr);
+	~p2p_network();
 	bool connection_listener();
 	bool join_network();
+	void broadcast_Tx(QString msg);
 
 	QString getServer_ip() const;
 	void setServer_ip(const QString &newServer_ip);
@@ -38,7 +40,6 @@ private:
 	QList<QTcpSocket *> m_sockets;
 
 	QString update_peer_list();
-	void broadcast_Tx(QString msg);
 };
 
 #endif // P2P_NETWORK_H

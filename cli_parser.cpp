@@ -11,6 +11,8 @@ cli_parser::cli_parser()
 	parser.addOption({{"c", "connect_to_network"}, "Make initial connection. [ip:port]", "connect_to_network"});
 }
 
+cli_parser::~cli_parser() {}
+
 bool cli_parser::parse(const QStringList& arguments)
 {
 	// Process the command line arguments
