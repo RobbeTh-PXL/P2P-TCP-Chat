@@ -23,6 +23,7 @@ class cli_parser
 
 public:
 	cli_parser ();
+	~cli_parser();
 	bool parse(const QStringList& arguments);
 
 	ParsedArguments getParsed_arguments() const;

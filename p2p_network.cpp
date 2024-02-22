@@ -18,6 +18,17 @@ the connection of the peers from the peer list as the created socket is also in 
 
 p2p_network::p2p_network(QObject *parent) : QObject(parent) {}
 
+p2p_network::~p2p_network()
+{
+	// Clean up resources
+	delete server; // Release the QTcpServer object
+	for (QTcpSocket *socket : m_sockets) {
+		socket->close();
+		delete socket; // Release each QTcpSocket object
+	}
+	m_sockets.clear(); // Clear the list of sockets
+}
+
 bool p2p_network::connection_listener()
 {
 	qDebug() << "Starting internal server...";
