@@ -60,8 +60,11 @@ int main(int argc, char *argv[])
 		}
 
 		// Send the input message to the network
-		// Replace network.send(msg) with your actual network function
-		network.broadcast_Tx(input);
+		if (!input.isEmpty())
+		{
+			qDebug() << "cli read: " << input;
+			network.broadcast_Tx(input);
+		}
 	}
 
 
