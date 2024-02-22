@@ -1,11 +1,13 @@
-#include "mainwindow.h"
-
 #include <QDebug>
 #include <QApplication>
 #include <QCommandLineParser>
 
 #include "cli_parser.h"
 #include "p2p_network.h"
+//#include "mainwindow.h"
+
+#include <QString>
+#include <QTextStream>
 
 int main(int argc, char *argv[])
 {
@@ -40,8 +42,32 @@ int main(int argc, char *argv[])
 		network.connection_listener();
 	}
 
-    MainWindow w;
-    w.show();
+	// CLI
+
+	QTextStream input_stream(stdin);
+	QString input;
+	qDebug() << "Enter messages to send (type 'exit' to quit):";
+
+	// Loop until the user enters the exit command
+	while (true) {
+		// Read input from stdin
+		input = input_stream.readLine();
+
+		// Check if the user entered the exit command
+		if (input == "exit") {
+			qDebug() << "Exiting...";
+			break;  // Break out of the loop
+		}
+
+		// Send the input message to the network
+		// Replace network.send(msg) with your actual network function
+		network.broadcast_Tx(input);
+	}
+
+
+	//GUI
+	//MainWindow w;
+	//w.show();
 
     return a.exec();
 }
