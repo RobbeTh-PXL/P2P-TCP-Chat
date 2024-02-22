@@ -57,8 +57,12 @@ void p2p_network::handle_new_connection()
 
 			qDebug() << "Could not connect to new peer";
 			qDebug() << "Socket error:" << socket->errorString();
-			//socket->close();
-			//delete socket;
+			// Check if socket still exist before yeeting it
+			if (socket)
+			{
+				socket->close();
+				delete socket;
+			}
 		}
 	}
 }
@@ -109,9 +113,13 @@ void p2p_network::broadcast_Tx(QString msg)
 			// Not send, remove from list
 			qWarning() << "Peer " << socket << " did not receive the message, and is removed";
 			qDebug() << "Socket error:" << socket->errorString();
-			socket->close();
-			m_sockets.removeOne(socket);
-			delete socket;
+			// Check if socket still exist before yeeting it
+			if (socket)
+			{
+				socket->close();
+				m_sockets.removeOne(socket);
+				delete socket;
+			}
 		}
 	}
 }
@@ -194,8 +202,13 @@ bool p2p_network::join_network()
 				{
 					qWarning() << "Could not connect to peer: " << line;
 					qDebug() << "Socket error:" << peer_socket->errorString();
-					peer_socket->close();
-					delete peer_socket;
+
+					// Check if socket still exist before yeeting it
+					if (socket)
+					{
+						peer_socket->close();
+						delete peer_socket;
+					}
 				}
 			}
 
@@ -211,9 +224,13 @@ bool p2p_network::join_network()
 		qWarning() << "Could not connect to server: " << server_ip << ":" << server_port;
 		qDebug() << "Socket error:" << socket->errorString();
 
-		socket->close();
-		delete socket;
-		return false;
+		// Check if socket still exist before yeeting it
+		if (socket)
+		{
+			socket->close();
+			delete socket;
+			return false;
+		}
 	}
 
 	qDebug() << "All peers added";
@@ -230,9 +247,13 @@ void p2p_network::handle_socket_state_changed()
 	if (socket->state() == QAbstractSocket::UnconnectedState)
 	{
 		qDebug() << "Peer " << socket->peerAddress().toIPv4Address() << " lost connection";
-		socket->close();
-		m_sockets.removeOne(socket);
-		delete socket;
+		// Check if socket still exist before yeeting it
+		if (socket)
+		{
+			socket->close();
+			m_sockets.removeOne(socket);
+			delete socket;
+		}
 	}
 }
 
